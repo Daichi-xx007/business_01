@@ -58,26 +58,26 @@ ul, ol {
 /* ---------- CSS Custom Properties ---------- */
 :root {
   /* Backgrounds */
-  --bg-primary: #FAFAF8;
-  --bg-secondary: #F3F1EE;
-  --bg-accent: #FFF8F0;
-  --bg-dark: #1A1A1A;
-  --bg-glass: rgba(255, 255, 255, 0.7);
+  --bg-primary: #FDFBF7;
+  --bg-secondary: #F4EFEA;
+  --bg-accent: #FAF3E8;
+  --bg-dark: #2C1E16;
+  --bg-glass: rgba(253, 251, 247, 0.7);
 
   /* Text */
-  --text-primary: #1A1A1A;
-  --text-secondary: #5A5A5A;
-  --text-muted: #9A9A9A;
+  --text-primary: #2C1E16;
+  --text-secondary: #5C4033;
+  --text-muted: #8B7355;
   --text-light: #FFFFFF;
 
-  /* Accents */
-  --accent: #E8A87C;
-  --accent-hover: #D4956A;
-  --accent-light: #F5D5BD;
-  --accent-secondary: #85B5A2;
-  --accent-secondary-hover: #6FA08C;
-  --accent-tertiary: #C9B8E8;
-  --accent-tertiary-hover: #B5A0D8;
+  /* Accents (Wooden Colors) */
+  --accent: #8B5A2B;
+  --accent-hover: #6B4226;
+  --accent-light: #DEB887;
+  --accent-secondary: #5C4033;
+  --accent-secondary-hover: #3E2723;
+  --accent-tertiary: #CD853F;
+  --accent-tertiary-hover: #A0522D;
 
   /* Semantic */
   --danger: #E85D5D;

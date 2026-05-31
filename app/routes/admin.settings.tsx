@@ -48,32 +48,53 @@ export async function action({ request }: { request: Request }) {
 
   const formData = await request.formData();
   const { setSetting } = await import("~/db/models/settings.server");
+  const { uploadImage } = await import("~/services/storage.server");
+
+  const logoFile = formData.get("logoFile") as File | null;
+  const heroImageFile = formData.get("heroImageFile") as File | null;
+  const ownerAvatarFile = formData.get("ownerAvatarFile") as File | null;
+
+  let logoUrl = String(formData.get("logoUrl") || "");
+  let heroImageUrl = String(formData.get("heroImageUrl") || "");
+  let ownerAvatar = String(formData.get("ownerAvatar") || "");
+
+  if (logoFile && logoFile.size > 0) {
+    const up = await uploadImage(logoFile);
+    if (up) logoUrl = up;
+  }
+  if (heroImageFile && heroImageFile.size > 0) {
+    const up = await uploadImage(heroImageFile);
+    if (up) heroImageUrl = up;
+  }
+  if (ownerAvatarFile && ownerAvatarFile.size > 0) {
+    const up = await uploadImage(ownerAvatarFile);
+    if (up) ownerAvatar = up;
+  }
 
   const keysToSave = [
-    { key: "SITE_NAME", field: "siteName" },
-    { key: "LOGO_URL", field: "logoUrl" },
-    { key: "HERO_IMAGE_URL", field: "heroImageUrl" },
-    { key: "HERO_TITLE", field: "heroTitle" },
-    { key: "HERO_SUBTITLE", field: "heroSubtitle" },
-    { key: "GEMINI_API_KEY", field: "geminiApiKey" },
-    { key: "WHATSAPP_NUMBER", field: "whatsappNumber" },
-    { key: "INSTAGRAM_URL", field: "instagramUrl" },
-    { key: "FACEBOOK_URL", field: "facebookUrl" },
-    { key: "JAZZCASH_MERCHANT_ID", field: "merchantId" },
-    { key: "JAZZCASH_PASSWORD", field: "password" },
-    { key: "JAZZCASH_INTEGRITY_SALT", field: "integritySalt" },
-    { key: "JAZZCASH_SANDBOX_URL", field: "sandboxUrl" },
-    { key: "JAZZCASH_RETURN_URL", field: "returnUrl" },
-    { key: "OWNER_AVATAR", field: "ownerAvatar" },
-    { key: "OWNER_NAME", field: "ownerName" },
-    { key: "OWNER_BIO", field: "ownerBio" },
-    { key: "SUPABASE_URL", field: "supabaseUrl" },
-    { key: "SUPABASE_ANON_KEY", field: "supabaseAnonKey" }
+    { key: "SITE_NAME", value: String(formData.get("siteName") || "") },
+    { key: "LOGO_URL", value: logoUrl },
+    { key: "HERO_IMAGE_URL", value: heroImageUrl },
+    { key: "HERO_TITLE", value: String(formData.get("heroTitle") || "") },
+    { key: "HERO_SUBTITLE", value: String(formData.get("heroSubtitle") || "") },
+    { key: "GEMINI_API_KEY", value: String(formData.get("geminiApiKey") || "") },
+    { key: "WHATSAPP_NUMBER", value: String(formData.get("whatsappNumber") || "") },
+    { key: "INSTAGRAM_URL", value: String(formData.get("instagramUrl") || "") },
+    { key: "FACEBOOK_URL", value: String(formData.get("facebookUrl") || "") },
+    { key: "JAZZCASH_MERCHANT_ID", value: String(formData.get("merchantId") || "") },
+    { key: "JAZZCASH_PASSWORD", value: String(formData.get("password") || "") },
+    { key: "JAZZCASH_INTEGRITY_SALT", value: String(formData.get("integritySalt") || "") },
+    { key: "JAZZCASH_SANDBOX_URL", value: String(formData.get("sandboxUrl") || "") },
+    { key: "JAZZCASH_RETURN_URL", value: String(formData.get("returnUrl") || "") },
+    { key: "OWNER_AVATAR", value: ownerAvatar },
+    { key: "OWNER_NAME", value: String(formData.get("ownerName") || "") },
+    { key: "OWNER_BIO", value: String(formData.get("ownerBio") || "") },
+    { key: "SUPABASE_URL", value: String(formData.get("supabaseUrl") || "") },
+    { key: "SUPABASE_ANON_KEY", value: String(formData.get("supabaseAnonKey") || "") }
   ];
 
   for (const item of keysToSave) {
-    const val = String(formData.get(item.field) || "");
-    await setSetting(item.key, val);
+    await setSetting(item.key, item.value);
   }
 
   return { success: true };
@@ -117,16 +138,44 @@ export default function AdminSettingsPage() {
           </div>
         )}
 
-        <Form method="post" className="admin-form" ref={formRef}>
+        <Form method="post" className="admin-form" encType="multipart/form-data" ref={formRef}>
 
           <h3 className="admin-section-title">Branding</h3>
           <div className="form-group">
             <label className="form-label" htmlFor="siteName">Site Name</label>
             <input id="siteName" name="siteName" type="text" className="form-input" defaultValue={data.siteName} />
           </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="logoUrl">Logo Image</label>
-            <input id="logoUrl" name="logoUrl" type="text" className="form-input" defaultValue={data.logoUrl} placeholder="/images/logo.png or https://..." />
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label" htmlFor="logoFile">Upload New Logo (Optional)</label>
+              <input id="logoFile" name="logoFile" type="file" accept="image/*" className="form-input" />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="logoUrl">Or Logo URL</label>
+              <input id="logoUrl" name="logoUrl" type="text" className="form-input" defaultValue={data.logoUrl} placeholder="/images/logo.png or https://..." />
+            </div>
+          </div>
+          
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label" htmlFor="heroImageFile">Upload Background Hero Image</label>
+              <input id="heroImageFile" name="heroImageFile" type="file" accept="image/*" className="form-input" />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="heroImageUrl">Or Hero Image URL</label>
+              <input id="heroImageUrl" name="heroImageUrl" type="text" className="form-input" defaultValue={data.heroImageUrl} placeholder="/images/hero.jpg or https://..." />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label" htmlFor="heroTitle">Hero Title</label>
+              <input id="heroTitle" name="heroTitle" type="text" className="form-input" defaultValue={data.heroTitle} placeholder="Welcome to Leftovers Zindabad" />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="heroSubtitle">Hero Subtitle</label>
+              <input id="heroSubtitle" name="heroSubtitle" type="text" className="form-input" defaultValue={data.heroSubtitle} placeholder="Find the best deals..." />
+            </div>
           </div>
 
           <h3 className="admin-section-title" style={{ marginTop: "2rem" }}>About Us Section</h3>
@@ -135,8 +184,14 @@ export default function AdminSettingsPage() {
               <label className="form-label" htmlFor="ownerName">Owner Name</label>
               <input id="ownerName" name="ownerName" type="text" className="form-input" defaultValue={data.ownerName} />
             </div>
+          </div>
+          <div className="form-row">
             <div className="form-group">
-              <label className="form-label" htmlFor="ownerAvatar">Owner Photo URL</label>
+              <label className="form-label" htmlFor="ownerAvatarFile">Upload Owner Photo (Optional)</label>
+              <input id="ownerAvatarFile" name="ownerAvatarFile" type="file" accept="image/*" className="form-input" />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="ownerAvatar">Or Owner Photo URL</label>
               <input id="ownerAvatar" name="ownerAvatar" type="text" className="form-input" defaultValue={data.ownerAvatar} placeholder="/images/owner.jpg or https://..." />
             </div>
           </div>
