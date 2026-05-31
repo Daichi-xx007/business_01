@@ -212,13 +212,13 @@ export function isSudoUnlocked(request: Request): boolean {
 }
 
 /**
- * Unlock Sudo Mode for 15 minutes and return the Set-Cookie header.
+ * Unlock Sudo Mode for 5 minutes and return the Set-Cookie header.
  */
 export function createSudoUnlockedCookie(request: Request): string {
   const session = getSession(request) || { sessionId: generateId() };
   
-  // Unlock for 15 minutes
-  session.sudoUnlockedUntil = Date.now() + 15 * 60 * 1000;
+  // Unlock for 5 minutes
+  session.sudoUnlockedUntil = Date.now() + 5 * 60 * 1000;
   
   const signed = sign(JSON.stringify(session));
   return serializeCookie(COOKIE_NAME, signed, {

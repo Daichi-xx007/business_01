@@ -72,8 +72,9 @@ export function SudoModal({ isOpen, onSuccess, onCancel }: SudoModalProps) {
               {fetcher.data?.success ? <Unlock size={24} color="green" /> : <Mail size={24} color="var(--accent)" />}
             </div>
             <h2 style={{ marginBottom: "0.5rem" }}>Enter Security Code</h2>
-            <p style={{ color: "var(--text-secondary)", marginBottom: "2rem", fontSize: "0.95rem" }}>
-              Check your email for the 6-digit code to unlock the dashboard.
+            <p style={{ color: "var(--text-secondary)", marginBottom: "1.5rem", lineHeight: "1.5" }}>
+              For your security, please verify your identity to perform sensitive actions. 
+              This will unlock the dashboard for <strong>5 minutes</strong>.
             </p>
             
             {error && <div style={{ color: "red", background: "#fee", padding: "0.5rem", borderRadius: "4px", marginBottom: "1rem", fontSize: "0.9rem" }}>{error}</div>}
