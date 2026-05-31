@@ -3,7 +3,6 @@ import { AdminLayout } from "~/components/AdminLayout";
 import { SudoModal } from "~/components/SudoModal";
 import { ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
-import { unstable_parseMultipartFormData, unstable_createMemoryUploadHandler } from "react-router";
 import path from "node:path";
 import fs from "node:fs";
 import "~/styles/admin.css";
@@ -33,11 +32,7 @@ export async function action({ params, request }: { params: { id: string }; requ
   }
 
   const productId = parseInt(params.id);
-  const uploadHandler = unstable_createMemoryUploadHandler({
-    maxPartSize: 10_000_000,
-  });
-
-  const formData = await unstable_parseMultipartFormData(request, uploadHandler);
+  const formData = await request.formData();
   const _action = String(formData.get("_action"));
 
   if (_action === "delete") {

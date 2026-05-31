@@ -3,7 +3,6 @@ import { AdminLayout } from "~/components/AdminLayout";
 import { SudoModal } from "~/components/SudoModal";
 import { ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
-import { unstable_parseMultipartFormData, unstable_createMemoryUploadHandler } from "react-router";
 import path from "node:path";
 import fs from "node:fs";
 import "~/styles/admin.css";
@@ -27,11 +26,7 @@ export async function action({ request }: { request: Request }) {
     return Response.json({ error: "sudo_required" }, { status: 403 });
   }
 
-  const uploadHandler = unstable_createMemoryUploadHandler({
-    maxPartSize: 10_000_000, // 10MB limit
-  });
-
-  const formData = await unstable_parseMultipartFormData(request, uploadHandler);
+  const formData = await request.formData();
   
   const name = String(formData.get("name") || "").trim();
   const description = String(formData.get("description") || "").trim();

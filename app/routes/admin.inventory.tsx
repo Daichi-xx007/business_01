@@ -3,7 +3,6 @@ import { AdminLayout } from "~/components/AdminLayout";
 import { SudoModal } from "~/components/SudoModal";
 import { Upload, FileSpreadsheet, Image as ImageIcon, AlertCircle, CheckCircle } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { unstable_parseMultipartFormData, unstable_createMemoryUploadHandler } from "react-router";
 import * as xlsx from "xlsx";
 import path from "node:path";
 import fs from "node:fs";
@@ -27,11 +26,7 @@ export async function action({ request }: { request: Request }) {
   }
 
   try {
-    const uploadHandler = unstable_createMemoryUploadHandler({
-      maxPartSize: 50_000_000, // 50MB
-    });
-
-    const formData = await unstable_parseMultipartFormData(request, uploadHandler);
+    const formData = await request.formData();
     
     // Grab the excel file
     const excelFile = formData.get("excelFile") as File | null;
