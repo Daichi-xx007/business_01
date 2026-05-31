@@ -17,6 +17,7 @@ interface SessionPayload {
   userId?: number;
   role?: string;
   sessionId: string;
+  sudoUnlockedUntil?: number;
 }
 
 // ---------------------------------------------------------------------------
@@ -199,4 +200,31 @@ export async function getSessionId(request: Request): Promise<string> {
   }
   // No session – generate a temporary guest ID
   return generateId();
+}
+
+/**
+ * Check if the admin is currently in "Sudo Mode" (unlocked for sensitive actions).
+ */
+export function isSudoUnlocked(request: Request): boolean {
+  const session = getSession(request);
+  if (!session?.sudoUnlockedUntil) return false;
+  return Date.now() < session.sudoUnlockedUntil;
+}
+
+/**
+ * Unlock Sudo Mode for 15 minutes and return the Set-Cookie header.
+ */
+export function createSudoUnlockedCookie(request: Request): string {
+  const session = getSession(request) || { sessionId: generateId() };
+  
+  // Unlock for 15 minutes
+  session.sudoUnlockedUntil = Date.now() + 15 * 60 * 1000;
+  
+  const signed = sign(JSON.stringify(session));
+  return serializeCookie(COOKIE_NAME, signed, {
+    maxAge: COOKIE_MAX_AGE,
+    httpOnly: true,
+    sameSite: "Lax",
+    path: "/",
+  });
 }

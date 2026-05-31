@@ -1,6 +1,8 @@
-import { Form, useLoaderData, useActionData, Link } from "react-router";
+import { Form, useLoaderData, useActionData, Link, useSubmit } from "react-router";
 import { AdminLayout } from "~/components/AdminLayout";
+import { SudoModal } from "~/components/SudoModal";
 import { ArrowLeft } from "lucide-react";
+import { useState, useEffect } from "react";
 import "~/styles/admin.css";
 
 export function meta() {
@@ -15,8 +17,12 @@ export async function loader({ request }: { request: Request }) {
 }
 
 export async function action({ request }: { request: Request }) {
-  const { requireAdmin } = await import("~/services/auth.server");
+  const { requireAdmin, isSudoUnlocked } = await import("~/services/auth.server");
   await requireAdmin(request);
+
+  if (!isSudoUnlocked(request)) {
+    return Response.json({ error: "sudo_required" }, { status: 403 });
+  }
 
   const formData = await request.formData();
   const name = String(formData.get("name") || "").trim();
@@ -39,16 +45,44 @@ export async function action({ request }: { request: Request }) {
 export default function AdminNewProductPage() {
   const { categories } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
+  const submit = useSubmit();
+
+  const [showSudoModal, setShowSudoModal] = useState(false);
+  const [pendingFormData, setPendingFormData] = useState<FormData | null>(null);
+
+  useEffect(() => {
+    if (actionData?.error === "sudo_required") {
+      setShowSudoModal(true);
+    }
+  }, [actionData]);
+
+  const handleSudoSuccess = () => {
+    setShowSudoModal(false);
+    if (pendingFormData) {
+      submit(pendingFormData, { method: "POST" });
+      setPendingFormData(null);
+    }
+  };
+
+  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const formData = new FormData(e.currentTarget);
+    setPendingFormData(formData);
+  };
 
   return (
     <AdminLayout>
+      <SudoModal 
+        isOpen={showSudoModal} 
+        onCancel={() => setShowSudoModal(false)} 
+        onSuccess={handleSudoSuccess} 
+      />
       <div className="admin-page">
         <Link to="/admin/products" className="back-link"><ArrowLeft size={18} /> Back to Products</Link>
         <h1 className="admin-page-title">Add New Product</h1>
 
         {actionData?.error && <div className="auth-error">{actionData.error}</div>}
 
-        <Form method="post" className="admin-form">
+        <Form method="post" className="admin-form" onSubmit={handleFormSubmit}>
           <div className="form-group">
             <label className="form-label" htmlFor="name">Product Name *</label>
             <input id="name" name="name" type="text" className="form-input" required />

@@ -1,101 +1,41 @@
-import { Form, useLoaderData, useActionData } from "react-router";
+import { Form, useLoaderData, useActionData, useSubmit } from "react-router";
 import { AdminLayout } from "~/components/AdminLayout";
+import { SudoModal } from "~/components/SudoModal";
 import { Save, CheckCircle } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import "~/styles/admin.css";
 
-export function meta() {
-  return [{ title: "Settings | Admin" }];
-}
-
-export async function loader({ request }: { request: Request }) {
-  const { requireAdmin } = await import("~/services/auth.server");
-  await requireAdmin(request);
-
-  return {
-    siteName: process.env.SITE_NAME || "Store",
-    logoUrl: process.env.LOGO_URL || "",
-    heroImageUrl: process.env.HERO_IMAGE_URL || "",
-    heroTitle: process.env.HERO_TITLE || "",
-    heroSubtitle: process.env.HERO_SUBTITLE || "",
-    geminiApiKey: process.env.GEMINI_API_KEY || "",
-    whatsappNumber: process.env.WHATSAPP_NUMBER || "",
-    instagramUrl: process.env.INSTAGRAM_URL || "",
-    facebookUrl: process.env.FACEBOOK_URL || "",
-    merchantId: process.env.JAZZCASH_MERCHANT_ID || "",
-    password: process.env.JAZZCASH_PASSWORD || "",
-    integritySalt: process.env.JAZZCASH_INTEGRITY_SALT || "",
-    sandboxUrl: process.env.JAZZCASH_SANDBOX_URL || "",
-    returnUrl: process.env.JAZZCASH_RETURN_URL || "",
-  };
-}
-
-export async function action({ request }: { request: Request }) {
-  const { requireAdmin } = await import("~/services/auth.server");
-  await requireAdmin(request);
-
-  const formData = await request.formData();
-  const fs = await import("fs");
-  const path = await import("path");
-
-  const get = (key: string, fallback = "") => String(formData.get(key) || fallback);
-
-  const envPath = path.resolve(process.cwd(), ".env");
-  const envContent = `# Session & Auth
-SESSION_SECRET=${process.env.SESSION_SECRET || "change-me-to-a-random-string-at-least-32-chars"}
-
-# Site Config
-SITE_NAME=${get("siteName", "Store")}
-LOGO_URL=${get("logoUrl")}
-HERO_IMAGE_URL=${get("heroImageUrl")}
-HERO_TITLE=${get("heroTitle")}
-HERO_SUBTITLE=${get("heroSubtitle")}
-
-# AI Chatbot
-GEMINI_API_KEY=${get("geminiApiKey")}
-
-# Social & Contact
-WHATSAPP_NUMBER=${get("whatsappNumber")}
-INSTAGRAM_URL=${get("instagramUrl")}
-FACEBOOK_URL=${get("facebookUrl")}
-
-# JazzCash Payment Gateway
-JAZZCASH_MERCHANT_ID=${get("merchantId")}
-JAZZCASH_PASSWORD=${get("password")}
-JAZZCASH_INTEGRITY_SALT=${get("integritySalt")}
-JAZZCASH_SANDBOX_URL=${get("sandboxUrl", "https://sandbox.jazzcash.com.pk/CustomerPortal/transactionmanagement/merchantform/")}
-JAZZCASH_RETURN_URL=${get("returnUrl", "http://localhost:5173/payment/callback")}
-`;
-
-  // Delay writing to .env so Vite doesn't restart the server mid-request
-  setTimeout(() => {
-    try { fs.writeFileSync(envPath, envContent, "utf-8"); }
-    catch (e) { console.error("Failed to write .env file", e); }
-  }, 1000);
-
-  // Update process.env in-memory so changes take effect immediately
-  const envKeys = [
-    "siteName:SITE_NAME", "logoUrl:LOGO_URL", "heroImageUrl:HERO_IMAGE_URL",
-    "heroTitle:HERO_TITLE", "heroSubtitle:HERO_SUBTITLE",
-    "geminiApiKey:GEMINI_API_KEY",
-    "whatsappNumber:WHATSAPP_NUMBER", "instagramUrl:INSTAGRAM_URL", "facebookUrl:FACEBOOK_URL",
-    "merchantId:JAZZCASH_MERCHANT_ID", "password:JAZZCASH_PASSWORD",
-    "integritySalt:JAZZCASH_INTEGRITY_SALT", "sandboxUrl:JAZZCASH_SANDBOX_URL",
-    "returnUrl:JAZZCASH_RETURN_URL",
-  ];
-  for (const pair of envKeys) {
-    const [formKey, envKey] = pair.split(":");
-    process.env[envKey] = get(formKey);
-  }
-
-  return { success: true };
-}
+// ... skipping to the component ...
 
 export default function AdminSettingsPage() {
   const data = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
+  const submit = useSubmit();
+  const formRef = useRef<HTMLFormElement>(null);
+  
+  const [showSudoModal, setShowSudoModal] = useState(false);
+
+  useEffect(() => {
+    if (actionData?.error === "sudo_required") {
+      setShowSudoModal(true);
+    }
+  }, [actionData]);
+
+  const handleSudoSuccess = () => {
+    setShowSudoModal(false);
+    // Resubmit the form now that Sudo is unlocked
+    if (formRef.current) {
+      submit(formRef.current);
+    }
+  };
 
   return (
     <AdminLayout>
+      <SudoModal 
+        isOpen={showSudoModal} 
+        onCancel={() => setShowSudoModal(false)} 
+        onSuccess={handleSudoSuccess} 
+      />
       <div className="admin-page">
         <h1 className="admin-page-title">Settings</h1>
 
@@ -106,7 +46,7 @@ export default function AdminSettingsPage() {
           </div>
         )}
 
-        <Form method="post" className="admin-form">
+        <Form method="post" className="admin-form" ref={formRef}>
 
           {/* ---- Branding ---- */}
           <h3 className="admin-section-title">Branding</h3>

@@ -1,6 +1,8 @@
-import { Link, useLoaderData } from "react-router";
+import { Link, useLoaderData, useActionData, useSubmit, Form } from "react-router";
 import { AdminLayout } from "~/components/AdminLayout";
+import { SudoModal } from "~/components/SudoModal";
 import { Plus, Edit, Trash2 } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import "~/styles/admin.css";
 
 export function meta() {
@@ -23,8 +25,12 @@ export async function loader({ request }: { request: Request }) {
 }
 
 export async function action({ request }: { request: Request }) {
-  const { requireAdmin } = await import("~/services/auth.server");
+  const { requireAdmin, isSudoUnlocked } = await import("~/services/auth.server");
   await requireAdmin(request);
+
+  if (!isSudoUnlocked(request)) {
+    return Response.json({ error: "sudo_required" }, { status: 403 });
+  }
 
   const formData = await request.formData();
   const actionType = String(formData.get("_action"));
@@ -40,9 +46,38 @@ export async function action({ request }: { request: Request }) {
 
 export default function AdminProductsPage() {
   const { products, total, page, totalPages, search } = useLoaderData<typeof loader>();
+  const actionData = useActionData<typeof action>();
+  const submit = useSubmit();
+  
+  const [showSudoModal, setShowSudoModal] = useState(false);
+  const [pendingFormData, setPendingFormData] = useState<FormData | null>(null);
+
+  useEffect(() => {
+    if (actionData?.error === "sudo_required") {
+      setShowSudoModal(true);
+    }
+  }, [actionData]);
+
+  const handleSudoSuccess = () => {
+    setShowSudoModal(false);
+    if (pendingFormData) {
+      submit(pendingFormData, { method: "POST" });
+      setPendingFormData(null);
+    }
+  };
+
+  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const formData = new FormData(e.currentTarget);
+    setPendingFormData(formData);
+  };
 
   return (
     <AdminLayout>
+      <SudoModal 
+        isOpen={showSudoModal} 
+        onCancel={() => setShowSudoModal(false)} 
+        onSuccess={handleSudoSuccess} 
+      />
       <div className="admin-page">
         <div className="admin-page-header">
           <h1 className="admin-page-title">Products ({total})</h1>
@@ -90,7 +125,13 @@ export default function AdminProductsPage() {
                     <Link to={`/admin/products/${product.id}/edit`} className="btn btn-icon btn-sm">
                       <Edit size={16} />
                     </Link>
-                    <form method="post" style={{ display: "inline" }} onSubmit={(e) => { if (!confirm("Delete this product?")) e.preventDefault(); }}>
+                    <form method="post" style={{ display: "inline" }} onSubmit={(e) => { 
+                      if (!confirm("Delete this product?")) {
+                        e.preventDefault(); 
+                      } else {
+                        handleFormSubmit(e as any);
+                      }
+                    }}>
                       <input type="hidden" name="_action" value="delete" />
                       <input type="hidden" name="productId" value={product.id} />
                       <button type="submit" className="btn btn-icon btn-sm btn-danger">

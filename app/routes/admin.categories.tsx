@@ -1,7 +1,8 @@
-import { Form, useLoaderData, useActionData } from "react-router";
+import { Form, useLoaderData, useActionData, useSubmit } from "react-router";
 import { AdminLayout } from "~/components/AdminLayout";
+import { SudoModal } from "~/components/SudoModal";
 import { Plus, Edit, Trash2, X, Check } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import "~/styles/admin.css";
 
 export function meta() {
@@ -16,8 +17,12 @@ export async function loader({ request }: { request: Request }) {
 }
 
 export async function action({ request }: { request: Request }) {
-  const { requireAdmin } = await import("~/services/auth.server");
+  const { requireAdmin, isSudoUnlocked } = await import("~/services/auth.server");
   await requireAdmin(request);
+
+  if (!isSudoUnlocked(request)) {
+    return Response.json({ error: "sudo_required" }, { status: 403 });
+  }
 
   const formData = await request.formData();
   const _action = String(formData.get("_action"));
@@ -57,10 +62,41 @@ export async function action({ request }: { request: Request }) {
 export default function AdminCategoriesPage() {
   const { categories } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
+  const submit = useSubmit();
+  const formRef = useRef<HTMLFormElement>(null);
+  
   const [showNew, setShowNew] = useState(false);
+  const [showSudoModal, setShowSudoModal] = useState(false);
+  const [pendingFormData, setPendingFormData] = useState<FormData | null>(null);
+
+  useEffect(() => {
+    if (actionData?.error === "sudo_required") {
+      setShowSudoModal(true);
+    }
+  }, [actionData]);
+
+  const handleSudoSuccess = () => {
+    setShowSudoModal(false);
+    if (pendingFormData) {
+      submit(pendingFormData, { method: "POST" });
+      setPendingFormData(null);
+    }
+  };
+
+  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    // If we have an error saying sudo_required, we need to capture the exact form that was submitted
+    // so we can resubmit it after Sudo unlocks. We intercept on submit to save the data.
+    const formData = new FormData(e.currentTarget);
+    setPendingFormData(formData);
+  };
 
   return (
     <AdminLayout>
+      <SudoModal 
+        isOpen={showSudoModal} 
+        onCancel={() => setShowSudoModal(false)} 
+        onSuccess={handleSudoSuccess} 
+      />
       <div className="admin-page">
         <div className="admin-page-header">
           <h1 className="admin-page-title">Categories</h1>
@@ -73,7 +109,7 @@ export default function AdminCategoriesPage() {
         {actionData?.error && <div className="auth-error">{actionData.error}</div>}
 
         {showNew && (
-          <Form method="post" className="admin-form admin-inline-form">
+          <Form method="post" className="admin-form admin-inline-form" onSubmit={handleFormSubmit}>
             <input type="hidden" name="_action" value="create" />
             <input name="name" type="text" placeholder="Category name" className="form-input" required />
             <input name="description" type="text" placeholder="Description" className="form-input" />
@@ -99,7 +135,13 @@ export default function AdminCategoriesPage() {
                 <td>{cat.product_count}</td>
                 <td>
                   <div className="admin-actions">
-                    <Form method="post" style={{ display: "inline" }} onSubmit={(e) => { if (!confirm("Delete this category?")) e.preventDefault(); }}>
+                    <Form method="post" style={{ display: "inline" }} onSubmit={(e) => { 
+                      if (!confirm("Delete this category?")) {
+                        e.preventDefault(); 
+                      } else {
+                        handleFormSubmit(e as any);
+                      }
+                    }}>
                       <input type="hidden" name="_action" value="delete" />
                       <input type="hidden" name="id" value={cat.id} />
                       <button type="submit" className="btn btn-icon btn-sm btn-danger"><Trash2 size={16} /></button>

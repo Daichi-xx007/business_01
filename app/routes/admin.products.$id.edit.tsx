@@ -1,6 +1,8 @@
-import { Form, useLoaderData, useActionData, Link } from "react-router";
+import { Form, useLoaderData, useActionData, Link, useSubmit } from "react-router";
 import { AdminLayout } from "~/components/AdminLayout";
+import { SudoModal } from "~/components/SudoModal";
 import { ArrowLeft } from "lucide-react";
+import { useState, useEffect } from "react";
 import "~/styles/admin.css";
 
 export function meta() {
@@ -20,8 +22,12 @@ export async function loader({ params, request }: { params: { id: string }; requ
 }
 
 export async function action({ params, request }: { params: { id: string }; request: Request }) {
-  const { requireAdmin } = await import("~/services/auth.server");
+  const { requireAdmin, isSudoUnlocked } = await import("~/services/auth.server");
   await requireAdmin(request);
+
+  if (!isSudoUnlocked(request)) {
+    return Response.json({ error: "sudo_required" }, { status: 403 });
+  }
 
   const productId = parseInt(params.id);
   const formData = await request.formData();
@@ -53,16 +59,44 @@ export async function action({ params, request }: { params: { id: string }; requ
 export default function AdminEditProductPage() {
   const { product, categories } = useLoaderData<typeof loader>();
   const actionData = useActionData<typeof action>();
+  const submit = useSubmit();
+
+  const [showSudoModal, setShowSudoModal] = useState(false);
+  const [pendingFormData, setPendingFormData] = useState<FormData | null>(null);
+
+  useEffect(() => {
+    if (actionData?.error === "sudo_required") {
+      setShowSudoModal(true);
+    }
+  }, [actionData]);
+
+  const handleSudoSuccess = () => {
+    setShowSudoModal(false);
+    if (pendingFormData) {
+      submit(pendingFormData, { method: "POST" });
+      setPendingFormData(null);
+    }
+  };
+
+  const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    const formData = new FormData(e.currentTarget);
+    setPendingFormData(formData);
+  };
 
   return (
     <AdminLayout>
+      <SudoModal 
+        isOpen={showSudoModal} 
+        onCancel={() => setShowSudoModal(false)} 
+        onSuccess={handleSudoSuccess} 
+      />
       <div className="admin-page">
         <Link to="/admin/products" className="back-link"><ArrowLeft size={18} /> Back to Products</Link>
         <h1 className="admin-page-title">Edit Product</h1>
 
-        {actionData?.error && <div className="auth-error">{actionData.error}</div>}
+        {actionData?.error && actionData.error !== "sudo_required" && <div className="auth-error">{actionData.error}</div>}
 
-        <Form method="post" className="admin-form">
+        <Form method="post" className="admin-form" onSubmit={handleFormSubmit}>
           <div className="form-group">
             <label className="form-label" htmlFor="name">Product Name *</label>
             <input id="name" name="name" type="text" className="form-input" required defaultValue={product.name} />
@@ -95,21 +129,16 @@ export default function AdminEditProductPage() {
             <label htmlFor="featured">Featured product</label>
           </div>
           <div className="admin-form-actions">
-            <button type="submit" className="btn btn-primary">Save Changes</button>
+            <button type="submit" name="_action" value="update" className="btn btn-primary">Save Changes</button>
             <button
               type="button"
               className="btn btn-danger"
               onClick={() => {
                 if (confirm("Delete this product?")) {
-                  const form = document.createElement("form");
-                  form.method = "post";
-                  const input = document.createElement("input");
-                  input.type = "hidden";
-                  input.name = "_action";
-                  input.value = "delete";
-                  form.appendChild(input);
-                  document.body.appendChild(form);
-                  form.submit();
+                  const formData = new FormData();
+                  formData.append("_action", "delete");
+                  setPendingFormData(formData);
+                  submit(formData, { method: "POST" });
                 }
               }}
             >
