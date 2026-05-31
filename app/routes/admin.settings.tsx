@@ -246,6 +246,22 @@ export default function AdminSettingsPage() {
             <label className="form-label" htmlFor="merchantId">Merchant ID</label>
             <input id="merchantId" name="merchantId" type="text" className="form-input" defaultValue={data.merchantId} />
           </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="password">Password</label>
+            <input id="password" name="password" type="password" className="form-input" defaultValue={data.password} />
+          </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="integritySalt">Integrity Salt</label>
+            <input id="integritySalt" name="integritySalt" type="password" className="form-input" defaultValue={data.integritySalt} />
+          </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="sandboxUrl">API URL (Sandbox or Live)</label>
+            <input id="sandboxUrl" name="sandboxUrl" type="text" className="form-input" defaultValue={data.sandboxUrl} placeholder="https://sandbox.jazzcash.com.pk/ApplicationAPI/API/2.0/Purchase/DoMWALLETTransaction" />
+          </div>
+          <div className="form-group">
+            <label className="form-label" htmlFor="returnUrl">Return URL</label>
+            <input id="returnUrl" name="returnUrl" type="text" className="form-input" defaultValue={data.returnUrl} placeholder="https://yourdomain.com/payment/callback" />
+          </div>
 
           <button type="submit" className="btn btn-primary" style={{ marginTop: "2rem" }}>
             <Save size={18} /> Save Settings
