@@ -9,12 +9,14 @@ import {
   ArrowLeft,
   Menu,
   X,
+  Upload
 } from "lucide-react";
 import { useState } from "react";
 
 const adminNavItems = [
   { to: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { to: "/admin/products", label: "Products", icon: Package },
+  { to: "/admin/inventory", label: "Bulk Import", icon: Upload },
   { to: "/admin/categories", label: "Categories", icon: FolderOpen },
   { to: "/admin/orders", label: "Orders", icon: ShoppingBag },
   { to: "/admin/users", label: "Users", icon: Users },
@@ -58,6 +60,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
             </Link>
           ))}
         </nav>
+
+
 
         <div className="admin-sidebar-footer">
           <Link to="/" className="admin-nav-link">
