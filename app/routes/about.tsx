@@ -1,7 +1,8 @@
 import { Header } from "~/components/Header";
 import { Footer } from "~/components/Footer";
 import { useLoaderData } from "react-router";
-import { Heart, Shield, Sparkles, Users } from "lucide-react";
+import { Heart, Shield, Sparkles, Users, Instagram, MessageCircle } from "lucide-react";
+import "~/styles/about.css";
 
 export function meta() {
   return [
@@ -16,16 +17,21 @@ export async function loader({ request }: { request: Request }) {
   const user = await getOptionalUser(request);
   const sessionId = await getSessionId(request);
   const cartCount = getCartCount(sessionId);
-  return { user, cartCount };
+  return { 
+    user, 
+    cartCount,
+    instagramUrl: process.env.INSTAGRAM_URL || "https://instagram.com",
+    whatsappNumber: process.env.WHATSAPP_NUMBER || ""
+  };
 }
 
 export default function AboutPage() {
-  const { user, cartCount } = useLoaderData<typeof loader>();
+  const { user, cartCount, instagramUrl, whatsappNumber } = useLoaderData<typeof loader>();
 
   return (
     <>
       <Header cartCount={cartCount} user={user} />
-      <main className="products-page">
+      <main className="about-page">
         <div className="container">
           <div className="about-hero">
             <h1 className="page-title">About Us</h1>
@@ -35,26 +41,57 @@ export default function AboutPage() {
             </p>
           </div>
 
-          <div className="about-values" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "2rem", margin: "3rem 0" }}>
-            <div className="why-shop-card">
-              <div className="why-shop-icon"><Heart size={28} /></div>
+          <div className="owner-section">
+            <div className="owner-avatar">
+              <span style={{ fontSize: "4rem", fontWeight: "bold" }}>SA</span>
+            </div>
+            <div className="owner-info">
+              <h3>Founder & Curator</h3>
+              <h2>Syeda Asia</h2>
+              <p>
+                Started with a passion for finding unique treasures, Syeda Asia built this store to share her love for exclusive, authentic, and meticulously curated items. Every piece in our collection is handpicked to ensure it brings joy, character, and uniqueness to your home. We're more than just a store; we're a community of enthusiasts who appreciate the beauty of the extraordinary.
+              </p>
+            </div>
+          </div>
+
+          <div className="connect-grid">
+            <a href={instagramUrl} target="_blank" rel="noopener noreferrer" className="connect-card instagram">
+              <div className="connect-card-icon">
+                <Instagram size={32} />
+              </div>
+              <h3>Follow on Instagram</h3>
+              <p>Join our visual journey and stay updated</p>
+            </a>
+            
+            <a href={`https://wa.me/${whatsappNumber.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="connect-card whatsapp">
+              <div className="connect-card-icon">
+                <MessageCircle size={32} />
+              </div>
+              <h3>Chat on WhatsApp</h3>
+              <p>Direct support and instant responses</p>
+            </a>
+          </div>
+
+          <div className="about-values">
+            <div className="value-card">
+              <div className="value-card-icon"><Heart size={24} /></div>
               <h3>Our Mission</h3>
               <p>To curate and deliver exceptional, one-of-a-kind items that bring joy and uniqueness to every home.</p>
             </div>
-            <div className="why-shop-card">
-              <div className="why-shop-icon"><Sparkles size={28} /></div>
+            <div className="value-card">
+              <div className="value-card-icon"><Sparkles size={24} /></div>
               <h3>Our Story</h3>
-              <p>Started with a passion for unique finds, we've grown into a trusted destination for exclusive items from across Pakistan.</p>
+              <p>Started with a passion for unique finds, we've grown into a trusted destination for exclusive items.</p>
             </div>
-            <div className="why-shop-card">
-              <div className="why-shop-icon"><Shield size={28} /></div>
+            <div className="value-card">
+              <div className="value-card-icon"><Shield size={24} /></div>
               <h3>Our Promise</h3>
-              <p>Every product is authentic, carefully inspected, and delivered with care. Your satisfaction is our top priority.</p>
+              <p>Every product is authentic, carefully inspected, and delivered with care. Satisfaction guaranteed.</p>
             </div>
-            <div className="why-shop-card">
-              <div className="why-shop-icon"><Users size={28} /></div>
-              <h3>Our Community</h3>
-              <p>We're building a community of collectors and enthusiasts who appreciate the beauty of unique, exclusive items.</p>
+            <div className="value-card">
+              <div className="value-card-icon"><Users size={24} /></div>
+              <h3>Community</h3>
+              <p>We're building a community of collectors and enthusiasts who appreciate the beauty of unique items.</p>
             </div>
           </div>
         </div>

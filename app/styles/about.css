@@ -1,0 +1,293 @@
+.about-page {
+  padding: 4rem 0 6rem;
+  background: var(--bg);
+}
+
+.about-hero {
+  text-align: center;
+  margin-bottom: 4rem;
+  padding: 0 1rem;
+}
+
+.about-hero .page-title {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: slideDown 0.8s ease-out;
+}
+
+.about-hero .page-subtitle {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  animation: fadeIn 1s ease-out 0.2s both;
+}
+
+/* Owner Section */
+.owner-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3rem;
+  background: var(--bg-secondary);
+  border-radius: 24px;
+  padding: 3rem;
+  margin-bottom: 4rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--border);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: slideUp 0.8s ease-out 0.3s both;
+}
+
+.owner-section:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+}
+
+.owner-avatar {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent-light), var(--accent));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  flex-shrink: 0;
+  box-shadow: 0 10px 20px rgba(var(--accent-rgb), 0.3);
+}
+
+.owner-info h2 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: var(--text);
+}
+
+.owner-info h3 {
+  font-size: 1rem;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.owner-info p {
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+/* Connect Grid */
+.connect-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2rem;
+  margin-bottom: 4rem;
+  animation: slideUp 0.8s ease-out 0.4s both;
+}
+
+.connect-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 2rem;
+  border-radius: 20px;
+  text-decoration: none;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.connect-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: white;
+  z-index: -1;
+  transition: transform 0.4s ease;
+  transform-origin: bottom;
+}
+
+.connect-card:hover {
+  transform: translateY(-10px);
+}
+
+.connect-card-icon {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+  transition: transform 0.4s ease;
+}
+
+.connect-card:hover .connect-card-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.connect-card h3 {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--text);
+}
+
+.connect-card p {
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+/* Specific Card Colors */
+.connect-card.instagram {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  color: white;
+  box-shadow: 0 10px 20px rgba(220, 39, 67, 0.2);
+}
+.connect-card.instagram::before {
+  background: var(--bg-secondary);
+  opacity: 0.95;
+}
+.connect-card.instagram:hover::before {
+  transform: scaleY(0);
+}
+.connect-card.instagram:hover h3,
+.connect-card.instagram:hover p {
+  color: white;
+}
+.connect-card.instagram .connect-card-icon {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+  color: white;
+}
+.connect-card.instagram:hover .connect-card-icon {
+  background: white;
+  color: #dc2743;
+}
+
+.connect-card.whatsapp {
+  background: #25D366;
+  color: white;
+  box-shadow: 0 10px 20px rgba(37, 211, 102, 0.2);
+}
+.connect-card.whatsapp::before {
+  background: var(--bg-secondary);
+  opacity: 0.95;
+}
+.connect-card.whatsapp:hover::before {
+  transform: scaleY(0);
+}
+.connect-card.whatsapp:hover h3,
+.connect-card.whatsapp:hover p {
+  color: white;
+}
+.connect-card.whatsapp .connect-card-icon {
+  background: #25D366;
+  color: white;
+}
+.connect-card.whatsapp:hover .connect-card-icon {
+  background: white;
+  color: #25D366;
+}
+
+/* Values Grid */
+.about-values {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+  animation: slideUp 0.8s ease-out 0.5s both;
+}
+
+.value-card {
+  background: var(--bg-secondary);
+  padding: 2rem;
+  border-radius: 16px;
+  text-align: center;
+  border: 1px solid var(--border);
+  transition: all 0.3s ease;
+}
+
+.value-card:hover {
+  transform: translateY(-5px);
+  border-color: var(--accent);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.05);
+}
+
+.value-card-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: rgba(var(--accent-rgb), 0.1);
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5rem auto;
+  transition: all 0.3s ease;
+}
+
+.value-card:hover .value-card-icon {
+  background: var(--accent);
+  color: white;
+  transform: scale(1.1);
+}
+
+.value-card h3 {
+  font-size: 1.2rem;
+  margin-bottom: 0.75rem;
+  color: var(--text);
+}
+
+.value-card p {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+/* Animations */
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Mobile Responsive */
+@media (max-width: 900px) {
+  .about-values {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .owner-section {
+    flex-direction: column;
+    text-align: center;
+    padding: 2rem;
+  }
+  
+  .connect-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .about-values {
+    grid-template-columns: 1fr;
+  }
+  .about-hero .page-title {
+    font-size: 2.5rem;
+  }
+}
