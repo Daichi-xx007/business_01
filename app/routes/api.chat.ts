@@ -23,7 +23,9 @@ async function callGemini(
   conversationHistory: GeminiMessage[],
   userMessage: string
 ): Promise<string> {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const { getSetting } = await import("~/db/models/settings.server");
+  const apiKey = await getSetting("GEMINI_API_KEY", process.env.GEMINI_API_KEY || "");
+  
   if (!apiKey) {
     return "I'm currently offline because the AI service hasn't been configured yet. Please contact the store directly through WhatsApp or check back later! 🙏";
   }
@@ -131,7 +133,7 @@ export async function action({ request }: { request: Request }) {
     : "";
 
   // Build system prompt
-  const systemPrompt = buildSystemPrompt(storeContext, faqSummary);
+  const systemPrompt = await buildSystemPrompt(storeContext, faqSummary);
 
   // Call Gemini
   const aiReply = await callGemini(systemPrompt, geminiHistory, userMessage);

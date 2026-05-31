@@ -11,15 +11,17 @@ import {
 import { ChatWidget } from "~/components/ChatWidget";
 
 export async function loader() {
+  const { getSetting } = await import("~/db/models/settings.server");
+  
   return {
-    siteName: process.env.SITE_NAME || "Store",
-    logoUrl: process.env.LOGO_URL || "",
-    heroImageUrl: process.env.HERO_IMAGE_URL || "",
-    heroTitle: process.env.HERO_TITLE || "",
-    heroSubtitle: process.env.HERO_SUBTITLE || "",
-    whatsappNumber: process.env.WHATSAPP_NUMBER || "",
-    instagramUrl: process.env.INSTAGRAM_URL || "",
-    facebookUrl: process.env.FACEBOOK_URL || "",
+    siteName: await getSetting("SITE_NAME", process.env.SITE_NAME || "Store"),
+    logoUrl: await getSetting("LOGO_URL", process.env.LOGO_URL || ""),
+    heroImageUrl: await getSetting("HERO_IMAGE_URL", process.env.HERO_IMAGE_URL || ""),
+    heroTitle: await getSetting("HERO_TITLE", process.env.HERO_TITLE || ""),
+    heroSubtitle: await getSetting("HERO_SUBTITLE", process.env.HERO_SUBTITLE || ""),
+    whatsappNumber: await getSetting("WHATSAPP_NUMBER", process.env.WHATSAPP_NUMBER || ""),
+    instagramUrl: await getSetting("INSTAGRAM_URL", process.env.INSTAGRAM_URL || ""),
+    facebookUrl: await getSetting("FACEBOOK_URL", process.env.FACEBOOK_URL || ""),
   };
 }
 
@@ -34,12 +36,31 @@ export function headers() {
 }
 
 import globalStyles from "./styles/global.css?url";
+import componentsStyles from "./styles/components.css?url";
+import aboutStyles from "./styles/about.css?url";
+import homeStyles from "./styles/home.css?url";
+import productsStyles from "./styles/products.css?url";
+import cartStyles from "./styles/cart.css?url";
+import checkoutStyles from "./styles/checkout.css?url";
+import authStyles from "./styles/auth.css?url";
+import adminStyles from "./styles/admin.css?url";
+import chatStyles from "./styles/chat.css?url";
 
 export function links() {
   return [
     { rel: "stylesheet", href: globalStyles },
+    { rel: "stylesheet", href: componentsStyles },
+    { rel: "stylesheet", href: aboutStyles },
+    { rel: "stylesheet", href: homeStyles },
+    { rel: "stylesheet", href: productsStyles },
+    { rel: "stylesheet", href: cartStyles },
+    { rel: "stylesheet", href: checkoutStyles },
+    { rel: "stylesheet", href: authStyles },
+    { rel: "stylesheet", href: adminStyles },
+    { rel: "stylesheet", href: chatStyles },
   ];
 }
+
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">

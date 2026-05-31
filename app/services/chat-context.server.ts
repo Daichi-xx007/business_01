@@ -5,7 +5,8 @@ import { db } from "~/db/database.server";
 // ---------------------------------------------------------------------------
 
 export async function getStoreContext(): Promise<string> {
-  const siteName = process.env.SITE_NAME || "Store";
+  const { getSetting } = await import("~/db/models/settings.server");
+  const siteName = await getSetting("SITE_NAME", process.env.SITE_NAME || "Store");
 
   // Products summary
   const productsResult = await db.query(
@@ -82,8 +83,10 @@ ${availableProducts
 // System prompt that makes the AI a store assistant
 // ---------------------------------------------------------------------------
 
-export function buildSystemPrompt(storeContext: string, faqSummary: string): string {
-  const siteName = process.env.SITE_NAME || "Store";
+export async function buildSystemPrompt(storeContext: string, faqSummary: string): Promise<string> {
+  const { getSetting } = await import("~/db/models/settings.server");
+  const siteName = await getSetting("SITE_NAME", process.env.SITE_NAME || "Store");
+  const whatsappNumber = await getSetting("WHATSAPP_NUMBER", process.env.WHATSAPP_NUMBER || "0300-1234567");
 
   return `You are the friendly AI shopping assistant for "${siteName}", an online store that sells unique, one-of-a-kind leftover items. Each item is exclusive — once sold, it's gone forever.
 
@@ -101,7 +104,7 @@ LANGUAGE RULES (CRITICAL):
 - NEVER say the words "Roman Urdu" or "Urdu" or announce what language you are speaking. Just naturally respond in their language.
 
 HUMAN AGENT HANDOFF:
-- If the user specifically asks to talk to a human agent, employee, real person, or owner, you MUST politely refer them to contact the store directly on WhatsApp at: 0300-1234567 (or the provided store contact number). Tell them an employee will assist them there.
+- If the user specifically asks to talk to a human agent, employee, real person, or owner, you MUST politely refer them to contact the store directly on WhatsApp at: ${whatsappNumber}. Tell them an employee will assist them there.
 
 WHAT YOU KNOW:
 ${storeContext}

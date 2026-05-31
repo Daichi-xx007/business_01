@@ -5,7 +5,75 @@ import { Save, CheckCircle } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import "~/styles/admin.css";
 
-// ... skipping to the component ...
+export function meta() {
+  return [{ title: "Settings | Admin" }];
+}
+
+export async function loader({ request }: { request: Request }) {
+  const { requireAdmin } = await import("~/services/auth.server");
+  await requireAdmin(request);
+  const { getAllSettings } = await import("~/db/models/settings.server");
+  const settings = await getAllSettings();
+  
+  return {
+    siteName: settings.SITE_NAME || process.env.SITE_NAME || "Leftovers Zindabad",
+    logoUrl: settings.LOGO_URL || process.env.LOGO_URL || "",
+    heroImageUrl: settings.HERO_IMAGE_URL || process.env.HERO_IMAGE_URL || "",
+    heroTitle: settings.HERO_TITLE || process.env.HERO_TITLE || "",
+    heroSubtitle: settings.HERO_SUBTITLE || process.env.HERO_SUBTITLE || "",
+    geminiApiKey: settings.GEMINI_API_KEY || process.env.GEMINI_API_KEY || "",
+    whatsappNumber: settings.WHATSAPP_NUMBER || process.env.WHATSAPP_NUMBER || "",
+    instagramUrl: settings.INSTAGRAM_URL || process.env.INSTAGRAM_URL || "",
+    facebookUrl: settings.FACEBOOK_URL || process.env.FACEBOOK_URL || "",
+    merchantId: settings.JAZZCASH_MERCHANT_ID || process.env.JAZZCASH_MERCHANT_ID || "",
+    password: settings.JAZZCASH_PASSWORD || process.env.JAZZCASH_PASSWORD || "",
+    integritySalt: settings.JAZZCASH_INTEGRITY_SALT || process.env.JAZZCASH_INTEGRITY_SALT || "",
+    sandboxUrl: settings.JAZZCASH_SANDBOX_URL || process.env.JAZZCASH_SANDBOX_URL || "",
+    returnUrl: settings.JAZZCASH_RETURN_URL || process.env.JAZZCASH_RETURN_URL || "",
+    ownerAvatar: settings.OWNER_AVATAR || "",
+    ownerName: settings.OWNER_NAME || "Syeda Asia",
+    ownerBio: settings.OWNER_BIO || ""
+  };
+}
+
+export async function action({ request }: { request: Request }) {
+  const { requireAdmin, isSudoUnlocked } = await import("~/services/auth.server");
+  await requireAdmin(request);
+
+  if (!isSudoUnlocked(request)) {
+    return Response.json({ error: "sudo_required" }, { status: 403 });
+  }
+
+  const formData = await request.formData();
+  const { setSetting } = await import("~/db/models/settings.server");
+
+  const keysToSave = [
+    { key: "SITE_NAME", field: "siteName" },
+    { key: "LOGO_URL", field: "logoUrl" },
+    { key: "HERO_IMAGE_URL", field: "heroImageUrl" },
+    { key: "HERO_TITLE", field: "heroTitle" },
+    { key: "HERO_SUBTITLE", field: "heroSubtitle" },
+    { key: "GEMINI_API_KEY", field: "geminiApiKey" },
+    { key: "WHATSAPP_NUMBER", field: "whatsappNumber" },
+    { key: "INSTAGRAM_URL", field: "instagramUrl" },
+    { key: "FACEBOOK_URL", field: "facebookUrl" },
+    { key: "JAZZCASH_MERCHANT_ID", field: "merchantId" },
+    { key: "JAZZCASH_PASSWORD", field: "password" },
+    { key: "JAZZCASH_INTEGRITY_SALT", field: "integritySalt" },
+    { key: "JAZZCASH_SANDBOX_URL", field: "sandboxUrl" },
+    { key: "JAZZCASH_RETURN_URL", field: "returnUrl" },
+    { key: "OWNER_AVATAR", field: "ownerAvatar" },
+    { key: "OWNER_NAME", field: "ownerName" },
+    { key: "OWNER_BIO", field: "ownerBio" }
+  ];
+
+  for (const item of keysToSave) {
+    const val = String(formData.get(item.field) || "");
+    await setSetting(item.key, val);
+  }
+
+  return { success: true };
+}
 
 export default function AdminSettingsPage() {
   const data = useLoaderData<typeof loader>();
@@ -23,7 +91,6 @@ export default function AdminSettingsPage() {
 
   const handleSudoSuccess = () => {
     setShowSudoModal(false);
-    // Resubmit the form now that Sudo is unlocked
     if (formRef.current) {
       submit(formRef.current);
     }
@@ -40,7 +107,7 @@ export default function AdminSettingsPage() {
         <h1 className="admin-page-title">Settings</h1>
 
         {actionData?.success && (
-          <div className="admin-success">
+          <div className="admin-success" style={{ color: "var(--success)", marginBottom: "1rem", display: "flex", gap: "0.5rem", alignItems: "center" }}>
             <CheckCircle size={18} />
             Settings saved successfully! Changes are live immediately.
           </div>
@@ -48,7 +115,6 @@ export default function AdminSettingsPage() {
 
         <Form method="post" className="admin-form" ref={formRef}>
 
-          {/* ---- Branding ---- */}
           <h3 className="admin-section-title">Branding</h3>
           <div className="form-group">
             <label className="form-label" htmlFor="siteName">Site Name</label>
@@ -57,84 +123,47 @@ export default function AdminSettingsPage() {
           <div className="form-group">
             <label className="form-label" htmlFor="logoUrl">Logo Image</label>
             <input id="logoUrl" name="logoUrl" type="text" className="form-input" defaultValue={data.logoUrl} placeholder="/images/logo.png or https://..." />
-            <span className="form-hint">Place your logo file in <code>public/images/</code> and enter the path here, e.g. <code>/images/logo.png</code>. Recommended size: 200×60px (transparent PNG).</span>
-            {data.logoUrl && (
-              <div style={{ marginTop: '8px', padding: '12px', background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', display: 'inline-block' }}>
-                <img src={data.logoUrl} alt="Logo preview" style={{ maxHeight: '50px', maxWidth: '200px' }} />
-              </div>
-            )}
           </div>
 
-          {/* ---- Hero Section ---- */}
-          <h3 className="admin-section-title" style={{ marginTop: "2rem" }}>Homepage Hero</h3>
-          <div className="form-group">
-            <label className="form-label" htmlFor="heroImageUrl">Hero Background Image</label>
-            <input id="heroImageUrl" name="heroImageUrl" type="text" className="form-input" defaultValue={data.heroImageUrl} placeholder="/images/hero-bg.jpg or https://..." />
-            <span className="form-hint">A wide banner image (1920×800px recommended). It will be displayed behind the hero text with a semi-transparent overlay. Place it in <code>public/images/</code>.</span>
-            {data.heroImageUrl && (
-              <div style={{ marginTop: '8px', borderRadius: 'var(--radius-md)', overflow: 'hidden', maxWidth: '400px' }}>
-                <img src={data.heroImageUrl} alt="Hero preview" style={{ width: '100%', height: '120px', objectFit: 'cover' }} />
-              </div>
-            )}
+          <h3 className="admin-section-title" style={{ marginTop: "2rem" }}>About Us Section</h3>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label" htmlFor="ownerName">Owner Name</label>
+              <input id="ownerName" name="ownerName" type="text" className="form-input" defaultValue={data.ownerName} />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="ownerAvatar">Owner Photo URL</label>
+              <input id="ownerAvatar" name="ownerAvatar" type="text" className="form-input" defaultValue={data.ownerAvatar} placeholder="/images/owner.jpg or https://..." />
+            </div>
           </div>
           <div className="form-group">
-            <label className="form-label" htmlFor="heroTitle">Hero Title (optional)</label>
-            <input id="heroTitle" name="heroTitle" type="text" className="form-input" defaultValue={data.heroTitle} placeholder="Discover Unique Treasures" />
-            <span className="form-hint">Leave blank to use the default title.</span>
-          </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="heroSubtitle">Hero Subtitle (optional)</label>
-            <input id="heroSubtitle" name="heroSubtitle" type="text" className="form-input" defaultValue={data.heroSubtitle} placeholder="Every item is exclusive — once it's gone, it's gone forever." />
+            <label className="form-label" htmlFor="ownerBio">Owner Bio</label>
+            <textarea id="ownerBio" name="ownerBio" className="form-textarea" rows={4} defaultValue={data.ownerBio}></textarea>
           </div>
 
-          {/* ---- AI Chatbot ---- */}
-          <h3 className="admin-section-title" style={{ marginTop: "2rem" }}>AI Chatbot</h3>
+          <h3 className="admin-section-title" style={{ marginTop: "2rem" }}>API Keys & Integrations</h3>
           <div className="form-group">
             <label className="form-label" htmlFor="geminiApiKey">Google Gemini API Key</label>
-            <input id="geminiApiKey" name="geminiApiKey" type="password" className="form-input" defaultValue={data.geminiApiKey} placeholder="AIza..." />
-            <span className="form-hint">Get a free API key from <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)' }}>Google AI Studio</a>. Powers the AI chat assistant.</span>
+            <input id="geminiApiKey" name="geminiApiKey" type="password" className="form-input" defaultValue={data.geminiApiKey} />
           </div>
 
-          {/* ---- Social ---- */}
           <h3 className="admin-section-title" style={{ marginTop: "2rem" }}>Social Media & Contact</h3>
           <div className="form-group">
             <label className="form-label" htmlFor="whatsappNumber">WhatsApp Number</label>
             <input id="whatsappNumber" name="whatsappNumber" type="text" className="form-input" defaultValue={data.whatsappNumber} placeholder="+923001234567" />
-            <span className="form-hint">Include country code. Adds a WhatsApp button on the site.</span>
           </div>
           <div className="form-group">
             <label className="form-label" htmlFor="instagramUrl">Instagram Page URL</label>
             <input id="instagramUrl" name="instagramUrl" type="url" className="form-input" defaultValue={data.instagramUrl} placeholder="https://instagram.com/yourpage" />
           </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="facebookUrl">Facebook Page URL</label>
-            <input id="facebookUrl" name="facebookUrl" type="url" className="form-input" defaultValue={data.facebookUrl} placeholder="https://facebook.com/yourpage" />
-          </div>
 
-          {/* ---- JazzCash ---- */}
-          <h3 className="admin-section-title" style={{ marginTop: "2rem" }}>JazzCash Payment Gateway</h3>
+          <h3 className="admin-section-title" style={{ marginTop: "2rem" }}>JazzCash</h3>
           <div className="form-group">
             <label className="form-label" htmlFor="merchantId">Merchant ID</label>
-            <input id="merchantId" name="merchantId" type="text" className="form-input" defaultValue={data.merchantId} placeholder="MC12345" />
-          </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="password">Password</label>
-            <input id="password" name="password" type="password" className="form-input" defaultValue={data.password} />
-          </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="integritySalt">Integrity Salt</label>
-            <input id="integritySalt" name="integritySalt" type="password" className="form-input" defaultValue={data.integritySalt} />
-          </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="sandboxUrl">Payment Gateway URL</label>
-            <input id="sandboxUrl" name="sandboxUrl" type="text" className="form-input" defaultValue={data.sandboxUrl} />
-          </div>
-          <div className="form-group">
-            <label className="form-label" htmlFor="returnUrl">Return URL</label>
-            <input id="returnUrl" name="returnUrl" type="text" className="form-input" defaultValue={data.returnUrl} />
+            <input id="merchantId" name="merchantId" type="text" className="form-input" defaultValue={data.merchantId} />
           </div>
 
-          <button type="submit" className="btn btn-primary">
+          <button type="submit" className="btn btn-primary" style={{ marginTop: "2rem" }}>
             <Save size={18} /> Save Settings
           </button>
         </Form>

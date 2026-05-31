@@ -14,19 +14,25 @@ export function meta() {
 export async function loader({ request }: { request: Request }) {
   const { getOptionalUser, getSessionId } = await import("~/services/auth.server");
   const { getCartCount } = await import("~/db/models/cart.server");
+  const { getSetting } = await import("~/db/models/settings.server");
+  
   const user = await getOptionalUser(request);
   const sessionId = await getSessionId(request);
   const cartCount = getCartCount(sessionId);
+  
   return { 
     user, 
     cartCount,
-    instagramUrl: process.env.INSTAGRAM_URL || "https://instagram.com",
-    whatsappNumber: process.env.WHATSAPP_NUMBER || ""
+    instagramUrl: await getSetting("INSTAGRAM_URL", process.env.INSTAGRAM_URL || "https://instagram.com"),
+    whatsappNumber: await getSetting("WHATSAPP_NUMBER", process.env.WHATSAPP_NUMBER || ""),
+    ownerAvatar: await getSetting("OWNER_AVATAR", ""),
+    ownerName: await getSetting("OWNER_NAME", "Syeda Asia"),
+    ownerBio: await getSetting("OWNER_BIO", "Started with a passion for finding unique treasures, Syeda Asia built this store to share her love for exclusive, authentic, and meticulously curated items. Every piece in our collection is handpicked to ensure it brings joy, character, and uniqueness to your home. We're more than just a store; we're a community of enthusiasts who appreciate the beauty of the extraordinary.")
   };
 }
 
 export default function AboutPage() {
-  const { user, cartCount, instagramUrl, whatsappNumber } = useLoaderData<typeof loader>();
+  const { user, cartCount, instagramUrl, whatsappNumber, ownerAvatar, ownerName, ownerBio } = useLoaderData<typeof loader>();
 
   return (
     <>
@@ -42,15 +48,13 @@ export default function AboutPage() {
           </div>
 
           <div className="owner-section">
-            <div className="owner-avatar">
-              <span style={{ fontSize: "4rem", fontWeight: "bold" }}>SA</span>
+            <div className="owner-avatar" style={ownerAvatar ? { backgroundImage: `url(${ownerAvatar})`, backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' } : {}}>
+              {!ownerAvatar && <span style={{ fontSize: "4rem", fontWeight: "bold" }}>{ownerName.substring(0,2).toUpperCase()}</span>}
             </div>
             <div className="owner-info">
               <h3>Founder & Curator</h3>
-              <h2>Syeda Asia</h2>
-              <p>
-                Started with a passion for finding unique treasures, Syeda Asia built this store to share her love for exclusive, authentic, and meticulously curated items. Every piece in our collection is handpicked to ensure it brings joy, character, and uniqueness to your home. We're more than just a store; we're a community of enthusiasts who appreciate the beauty of the extraordinary.
-              </p>
+              <h2>{ownerName}</h2>
+              <p>{ownerBio}</p>
             </div>
           </div>
 
