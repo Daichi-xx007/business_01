@@ -34,7 +34,9 @@ export async function loader({ request }: { request: Request }) {
     ownerName: settings.OWNER_NAME || "Syeda Asia",
     ownerBio: settings.OWNER_BIO || "",
     supabaseUrl: settings.SUPABASE_URL || process.env.SUPABASE_URL || "",
-    supabaseAnonKey: settings.SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ""
+    supabaseAnonKey: settings.SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "",
+    smtpEmail: settings.SMTP_EMAIL || process.env.SMTP_EMAIL || "",
+    smtpPassword: settings.SMTP_PASSWORD || process.env.SMTP_PASSWORD || ""
   };
 }
 
@@ -90,7 +92,9 @@ export async function action({ request }: { request: Request }) {
     { key: "OWNER_NAME", value: String(formData.get("ownerName") || "") },
     { key: "OWNER_BIO", value: String(formData.get("ownerBio") || "") },
     { key: "SUPABASE_URL", value: String(formData.get("supabaseUrl") || "") },
-    { key: "SUPABASE_ANON_KEY", value: String(formData.get("supabaseAnonKey") || "") }
+    { key: "SUPABASE_ANON_KEY", value: String(formData.get("supabaseAnonKey") || "") },
+    { key: "SMTP_EMAIL", value: String(formData.get("smtpEmail") || "") },
+    { key: "SMTP_PASSWORD", value: String(formData.get("smtpPassword") || "") }
   ];
 
   for (const item of keysToSave) {
@@ -213,6 +217,17 @@ export default function AdminSettingsPage() {
             <div className="form-group">
               <label className="form-label" htmlFor="supabaseAnonKey">Supabase Anon Key</label>
               <input id="supabaseAnonKey" name="supabaseAnonKey" type="password" className="form-input" defaultValue={data.supabaseAnonKey} />
+            </div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label" htmlFor="smtpEmail">Resend/SMTP Email</label>
+              <input id="smtpEmail" name="smtpEmail" type="email" className="form-input" defaultValue={data.smtpEmail} placeholder="orders@yourdomain.com" />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="smtpPassword">SMTP Password (API Key)</label>
+              <input id="smtpPassword" name="smtpPassword" type="password" className="form-input" defaultValue={data.smtpPassword} />
             </div>
           </div>
 

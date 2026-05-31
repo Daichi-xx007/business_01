@@ -1,10 +1,11 @@
 import nodemailer from "nodemailer";
 import type { Order } from "~/db/models/orders.server";
+import { getSetting } from "~/db/models/settings.server";
 
 // We create a reusable transporter object using the default SMTP transport
-const createTransporter = () => {
-  const email = process.env.SMTP_EMAIL;
-  const pass = process.env.SMTP_PASSWORD;
+const createTransporter = async () => {
+  const email = await getSetting("SMTP_EMAIL", process.env.SMTP_EMAIL || "");
+  const pass = await getSetting("SMTP_PASSWORD", process.env.SMTP_PASSWORD || "");
 
   if (!email || !pass) {
     console.warn("SMTP_EMAIL or SMTP_PASSWORD not set. Emails will not be sent.");
@@ -23,7 +24,7 @@ const createTransporter = () => {
 };
 
 export async function sendOrderConfirmationEmail(order: Order) {
-  const transporter = createTransporter();
+  const transporter = await createTransporter();
   if (!transporter) return;
 
   const siteName = process.env.SITE_NAME || "Our Store";
@@ -103,7 +104,7 @@ export async function sendOrderConfirmationEmail(order: Order) {
 }
 
 export async function sendOTPEmail(email: string, code: string, purpose: "checkout" | "admin_sudo") {
-  const transporter = createTransporter();
+  const transporter = await createTransporter();
   if (!transporter) return;
 
   const siteName = process.env.SITE_NAME || "Our Store";
@@ -120,7 +121,7 @@ export async function sendOTPEmail(email: string, code: string, purpose: "checko
       <div style="margin: 30px 0; padding: 20px; background-color: #f9f9f9; border-radius: 8px;">
         <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #1A1A1A;">${code}</span>
       </div>
-      <p style="color: #999; font-size: 14px;">This code will expire in 10 minutes.</p>
+      <p style="color: #999; font-size: 14px;">This code will expire in 5 minutes.</p>
     </div>
   `;
 
@@ -138,7 +139,7 @@ export async function sendOTPEmail(email: string, code: string, purpose: "checko
 }
 
 export async function sendPendingOrderEmail(order: Order) {
-  const transporter = createTransporter();
+  const transporter = await createTransporter();
   if (!transporter) return;
 
   const siteName = process.env.SITE_NAME || "Our Store";
