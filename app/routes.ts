@@ -39,5 +39,6 @@ export default [
     route("orders", "routes/admin.orders.tsx"),
     route("users", "routes/admin.users.tsx"),
     route("settings", "routes/admin.settings.tsx"),
+    route("inventory", "routes/admin.inventory.tsx"),
   ]),
 ] satisfies RouteConfig;
