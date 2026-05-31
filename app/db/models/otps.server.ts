@@ -12,9 +12,9 @@ export async function generateOTP(email: string, purpose: "checkout" | "admin_su
   // Generate a random 6-digit code
   const code = Math.floor(100000 + Math.random() * 900000).toString();
   
-  // Set expiration to 10 minutes from now
+  // Set expiration to 5 minutes from now
   const expiresAt = new Date();
-  expiresAt.setMinutes(expiresAt.getMinutes() + 10);
+  expiresAt.setMinutes(expiresAt.getMinutes() + 5);
 
   await db.query(
     `INSERT INTO otps (email, code, purpose, expires_at) VALUES ($1, $2, $3, $4)`,

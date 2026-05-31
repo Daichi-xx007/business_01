@@ -3,6 +3,9 @@ import { AdminLayout } from "~/components/AdminLayout";
 import { SudoModal } from "~/components/SudoModal";
 import { ArrowLeft } from "lucide-react";
 import { useState, useEffect } from "react";
+import { unstable_parseMultipartFormData, unstable_createMemoryUploadHandler } from "react-router";
+import path from "node:path";
+import fs from "node:fs";
 import "~/styles/admin.css";
 
 export function meta() {
@@ -30,12 +33,16 @@ export async function action({ params, request }: { params: { id: string }; requ
   }
 
   const productId = parseInt(params.id);
-  const formData = await request.formData();
+  const uploadHandler = unstable_createMemoryUploadHandler({
+    maxPartSize: 10_000_000,
+  });
+
+  const formData = await unstable_parseMultipartFormData(request, uploadHandler);
   const _action = String(formData.get("_action"));
 
   if (_action === "delete") {
     const { deleteProduct } = await import("~/db/models/products.server");
-    deleteProduct(productId);
+    await deleteProduct(productId);
     return new Response(null, { status: 302, headers: { Location: "/admin/products" } });
   }
 
@@ -43,15 +50,28 @@ export async function action({ params, request }: { params: { id: string }; requ
   const description = String(formData.get("description") || "").trim();
   const price = parseFloat(String(formData.get("price") || "0"));
   const category_id = parseInt(String(formData.get("category_id") || "0")) || null;
-  const image_url = String(formData.get("image_url") || "").trim();
   const featured = formData.get("featured") === "on" ? 1 : 0;
+  let image_url = String(formData.get("image_url") || "").trim();
+
+  const imageFile = formData.get("imageFile") as File | null;
 
   if (!name || price <= 0) {
     return { error: "Name and valid price are required." };
   }
 
+  if (imageFile && imageFile.name) {
+    const PUBLIC_DIR = path.join(process.cwd(), "public", "images");
+    if (!fs.existsSync(PUBLIC_DIR)) fs.mkdirSync(PUBLIC_DIR, { recursive: true });
+
+    const imgBuffer = await imageFile.arrayBuffer();
+    const safeName = Date.now() + "-" + imageFile.name.replace(/[^a-zA-Z0-9.\-_]/g, "");
+    const destPath = path.join(PUBLIC_DIR, safeName);
+    fs.writeFileSync(destPath, Buffer.from(imgBuffer));
+    image_url = `/images/${safeName}`;
+  }
+
   const { updateProduct } = await import("~/db/models/products.server");
-  updateProduct(productId, { name, description, price, category_id, image_url, featured });
+  await updateProduct(productId, { name, description, price, category_id, image_url, featured });
 
   return new Response(null, { status: 302, headers: { Location: "/admin/products" } });
 }
@@ -73,14 +93,25 @@ export default function AdminEditProductPage() {
   const handleSudoSuccess = () => {
     setShowSudoModal(false);
     if (pendingFormData) {
-      submit(pendingFormData, { method: "POST" });
+      submit(pendingFormData, { method: "POST", encType: "multipart/form-data" });
       setPendingFormData(null);
     }
   };
 
   const handleFormSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    // We cannot reliably intercept the submit button value via formData without e.nativeEvent.submitter
+    // So we add _action to formData manually
     const formData = new FormData(e.currentTarget);
+    const submitter = (e.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+    if (submitter && submitter.name === "_action") {
+      formData.set("_action", submitter.value);
+    } else {
+      formData.set("_action", "update");
+    }
+    
     setPendingFormData(formData);
+    submit(formData, { method: "POST", encType: "multipart/form-data" });
   };
 
   return (
@@ -96,7 +127,7 @@ export default function AdminEditProductPage() {
 
         {actionData?.error && actionData.error !== "sudo_required" && <div className="auth-error">{actionData.error}</div>}
 
-        <Form method="post" className="admin-form" onSubmit={handleFormSubmit}>
+        <Form method="post" className="admin-form" encType="multipart/form-data" onSubmit={handleFormSubmit}>
           <div className="form-group">
             <label className="form-label" htmlFor="name">Product Name *</label>
             <input id="name" name="name" type="text" className="form-input" required defaultValue={product.name} />
@@ -120,10 +151,18 @@ export default function AdminEditProductPage() {
               </select>
             </div>
           </div>
+          
           <div className="form-group">
-            <label className="form-label" htmlFor="image_url">Image URL</label>
+            <label className="form-label" htmlFor="imageFile">Product Image Upload</label>
+            <input id="imageFile" name="imageFile" type="file" accept="image/*" className="form-input" />
+            <span className="form-hint">Upload a new image to replace the current one.</span>
+          </div>
+
+          <div className="form-group">
+            <label className="form-label" htmlFor="image_url">Current Image URL</label>
             <input id="image_url" name="image_url" type="text" className="form-input" defaultValue={product.image_url} />
           </div>
+          
           <div className="form-group form-checkbox">
             <input id="featured" name="featured" type="checkbox" defaultChecked={product.featured === 1} />
             <label htmlFor="featured">Featured product</label>
@@ -138,7 +177,7 @@ export default function AdminEditProductPage() {
                   const formData = new FormData();
                   formData.append("_action", "delete");
                   setPendingFormData(formData);
-                  submit(formData, { method: "POST" });
+                  submit(formData, { method: "POST", encType: "multipart/form-data" });
                 }
               }}
             >
