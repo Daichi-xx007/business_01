@@ -32,7 +32,9 @@ export async function loader({ request }: { request: Request }) {
     returnUrl: settings.JAZZCASH_RETURN_URL || process.env.JAZZCASH_RETURN_URL || "",
     ownerAvatar: settings.OWNER_AVATAR || "",
     ownerName: settings.OWNER_NAME || "Syeda Asia",
-    ownerBio: settings.OWNER_BIO || ""
+    ownerBio: settings.OWNER_BIO || "",
+    supabaseUrl: settings.SUPABASE_URL || process.env.SUPABASE_URL || "",
+    supabaseAnonKey: settings.SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || ""
   };
 }
 
@@ -64,7 +66,9 @@ export async function action({ request }: { request: Request }) {
     { key: "JAZZCASH_RETURN_URL", field: "returnUrl" },
     { key: "OWNER_AVATAR", field: "ownerAvatar" },
     { key: "OWNER_NAME", field: "ownerName" },
-    { key: "OWNER_BIO", field: "ownerBio" }
+    { key: "OWNER_BIO", field: "ownerBio" },
+    { key: "SUPABASE_URL", field: "supabaseUrl" },
+    { key: "SUPABASE_ANON_KEY", field: "supabaseAnonKey" }
   ];
 
   for (const item of keysToSave) {
@@ -145,6 +149,16 @@ export default function AdminSettingsPage() {
           <div className="form-group">
             <label className="form-label" htmlFor="geminiApiKey">Google Gemini API Key</label>
             <input id="geminiApiKey" name="geminiApiKey" type="password" className="form-input" defaultValue={data.geminiApiKey} />
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label" htmlFor="supabaseUrl">Supabase Project URL</label>
+              <input id="supabaseUrl" name="supabaseUrl" type="url" className="form-input" defaultValue={data.supabaseUrl} placeholder="https://xyz.supabase.co" />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="supabaseAnonKey">Supabase Anon Key</label>
+              <input id="supabaseAnonKey" name="supabaseAnonKey" type="password" className="form-input" defaultValue={data.supabaseAnonKey} />
+            </div>
           </div>
 
           <h3 className="admin-section-title" style={{ marginTop: "2rem" }}>Social Media & Contact</h3>

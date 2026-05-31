@@ -41,15 +41,10 @@ export async function action({ request }: { request: Request }) {
     return { error: "Name and valid price are required." };
   }
 
-  if (imageFile && imageFile.name) {
-    const PUBLIC_DIR = path.join(process.cwd(), "public", "images");
-    if (!fs.existsSync(PUBLIC_DIR)) fs.mkdirSync(PUBLIC_DIR, { recursive: true });
-
-    const imgBuffer = await imageFile.arrayBuffer();
-    const safeName = Date.now() + "-" + imageFile.name.replace(/[^a-zA-Z0-9.\-_]/g, "");
-    const destPath = path.join(PUBLIC_DIR, safeName);
-    fs.writeFileSync(destPath, Buffer.from(imgBuffer));
-    image_url = `/images/${safeName}`;
+  if (imageFile && imageFile.size > 0) {
+    const { uploadImage } = await import("~/services/storage.server");
+    const uploadedUrl = await uploadImage(imageFile);
+    if (uploadedUrl) image_url = uploadedUrl;
   }
 
   const { createProduct } = await import("~/db/models/products.server");

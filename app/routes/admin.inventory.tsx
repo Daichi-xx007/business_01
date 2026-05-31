@@ -51,20 +51,13 @@ export async function action({ request }: { request: Request }) {
     }
 
     const { db } = await import("~/db/database.server");
-    const PUBLIC_DIR = path.join(process.cwd(), "public", "images");
-    if (!fs.existsSync(PUBLIC_DIR)) {
-      fs.mkdirSync(PUBLIC_DIR, { recursive: true });
-    }
-
-    // Save all images to public/images
-    const savedImageNames = new Set<string>();
+    const { uploadImage } = await import("~/services/storage.server");
+    
+    const imageMap = new Map<string, string>();
     for (const img of imageFiles) {
       if (img && img.name) {
-        const imgBuffer = await img.arrayBuffer();
-        const safeName = img.name.replace(/[^a-zA-Z0-9.\-_]/g, ""); // sanitize
-        const destPath = path.join(PUBLIC_DIR, safeName);
-        fs.writeFileSync(destPath, Buffer.from(imgBuffer));
-        savedImageNames.add(safeName);
+        const url = await uploadImage(img);
+        if (url) imageMap.set(img.name, url);
       }
     }
 
@@ -106,14 +99,14 @@ export async function action({ request }: { request: Request }) {
         // Image Mapping
         let finalImageUrl = "/images/placeholder.jpg";
         if (rawImageName) {
-          const safeTarget = String(rawImageName).replace(/[^a-zA-Z0-9.\-_]/g, "");
-          if (savedImageNames.has(safeTarget)) {
-            finalImageUrl = `/images/${safeTarget}`;
+          const targetName = String(rawImageName).trim();
+          if (imageMap.has(targetName)) {
+            finalImageUrl = imageMap.get(targetName)!;
           } else {
              // Look for fuzzy match
-             const possibleMatches = Array.from(savedImageNames).filter(n => n.includes(safeTarget) || safeTarget.includes(n));
+             const possibleMatches = Array.from(imageMap.keys()).filter(n => n.includes(targetName) || targetName.includes(n));
              if (possibleMatches.length > 0) {
-               finalImageUrl = `/images/${possibleMatches[0]}`;
+               finalImageUrl = imageMap.get(possibleMatches[0])!;
              }
           }
         }
