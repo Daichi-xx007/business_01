@@ -165,7 +165,16 @@ export async function updatePaymentStatus(
       }
     }
     await db.query("COMMIT");
-    return await getOrderByNumber(orderNumber);
+    
+    const finalOrder = await getOrderByNumber(orderNumber);
+    if (status === "paid" && finalOrder) {
+      // Fire off the email asynchronously (don't await it so we don't slow down the response)
+      import("~/services/email.server").then(({ sendOrderConfirmationEmail }) => {
+        sendOrderConfirmationEmail(finalOrder).catch(console.error);
+      }).catch(console.error);
+    }
+    
+    return finalOrder;
   } catch (err) {
     await db.query("ROLLBACK");
     throw err;
